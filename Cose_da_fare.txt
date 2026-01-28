@@ -1,0 +1,43 @@
+chiede
+
+Cose da fare
+
+*cose non urgenti*
+
+18. registra_partita -> aggiungere possibilità di aggiungere punteggio anche se non sei di quella squadra
+
+*cose urgenti*
+
+
+
+
+problemi usciti al test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cose fatte
+1. start funziona
+2. registrazione funziona
+3.comandi admin funzionano
+4. menu a posto
+
+6. info funziona
+6a. info -> classifica funziona
+7. generazione lista match (ogni volta che si aggiunge una squadra)
+8. operations
+9. creare funzione per resettare utente, cancella utente e id dalla tabella e lo toglie dalla squadra_tabella_giocatori
+
+Ultima cosa fatta:
