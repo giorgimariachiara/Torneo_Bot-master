@@ -13,18 +13,23 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 
-DB_PATH = "Torneo_Molkky.db"
+# --- GESTIONE PERCORSI DINAMICI ---
+# Calcola la cartella principale del progetto (Torneo_Bot-master)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Percorsi universali (funzionano su Windows e Mac)
+DB_PATH = os.path.join(BASE_DIR, "Torneo_Molkky.db")
+OUTPUT_CLASSIFICA_PATH = os.path.join(BASE_DIR, "Foto", "classifica")
+FONT_PATH = os.path.join(BASE_DIR, "assets", "seguiemj.ttf") 
+
+# --- COSTANTI GRAFICHE ---
 EMOJI_POSIZIONE = ["🥇", "🥈", "🥉", "😎", "😜", "🤩", "😏", "🤫", "😣", "😑", "😶", "🥵", "🤬", "😬", "😧", "🥱", "🥶"]
-OUTPUT_CLASSIFICA_PATH = r"C:\Users\giorg\PycharmProjects\Torneo_Bot\Foto\classifica"
-# Font consigliato: puoi usare Arial o caricare un TTF con più supporto emoji
-FONT_PATH = r"C:\WINDOWS\FONTS\SegUIEMJ.ttf"  # Assicurati che sia presente sul sistema
 FONT_SIZE = 34
 PADDING = 30
-LINE_SPACING = 20  # spazio extra tra le righe
+LINE_SPACING = 20  
 BORDER_COLOR = "#CCCCCC"
 BG_COLOR = "white"
 TEXT_COLOR = "black"
-
 
 
 # Mostra i pulsanti info
