@@ -1,5 +1,5 @@
 # handlers/admin.py
-
+import random
 
 from telegram import Update, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, ConversationHandler, filters, \
@@ -82,8 +82,9 @@ async def aggiungi_squadra_start(update: Update, context: ContextTypes.DEFAULT_T
     await update.message.reply_text("✏️ Inserisci il nome della nuova squadra e invia il messaggio.\n\nScrivi 'fine' quando hai finito di inserire squadre.")
 
     return ATTESA_NOME_SQUADRA
-
+NUM_SQUADRA=0
 async def ricevi_nome_squadra(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    global NUM_SQUADRA
     print('admin -> ricevi_nome_squadra')
     nome = update.message.text.strip().upper()
 
@@ -99,8 +100,10 @@ async def ricevi_nome_squadra(update: Update, context: ContextTypes.DEFAULT_TYPE
         return ATTESA_NOME_SQUADRA
 
     aggiungi_squadra(nome)
+
     await update.message.reply_text(f"✅ Squadra `{nome}` aggiunta con successo.", parse_mode="Markdown",
         reply_markup=ReplyKeyboardRemove())
+    NUM_SQUADRA += 1
     return ATTESA_NOME_SQUADRA
 
 aggiunta_squadra_handler = ConversationHandler(
@@ -174,8 +177,36 @@ broadcast_handler = ConversationHandler(
 
 
 async def inizio_torneo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global NUM_SQUADRA
+
+
+    status=globals.config_torneo[NUM_SQUADRA]
+    num_gironi=status['num_gironi']
+    num_campi=status['numero_campi']
+    with sqlite3.connect("Torneo_Molkky.db") as conn:
+        cur = conn.cursor()
+
+        for index in range(8):
+            girone=(index//num_campi)+1
+            cur.execute("UPDATE Campi SET Girone=? WHERE id_campo=?",(girone,index+1,))
+            conn.commit()
+    with sqlite3.connect("Torneo_Molkky.db") as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT Nome_squadra FROM Squadre")
+        nome_squadre = [r[0] for r in cur.fetchall()]
+
+        random.shuffle(nome_squadre)
+        #assegnazioni = {}
+        for i, squadra in enumerate(nome_squadre):
+            girone = (i % num_gironi) + 1
+            #assegnazioni[squadra] = girone
+            cur.execute("UPDATE Squadre SET Girone=? WHERE Nome_squadra=?", (girone, squadra,))
+            conn.commit()
+
     globals.ISCRIZIONI = False
-    print(f"fine registrazioni" )
+    print(f"fine registrazioni")
+
+
 
 
 

@@ -21,8 +21,8 @@ def genera_tabella_campi(n_campi):
         cur.execute("DELETE FROM sqlite_sequence WHERE name='Campi';")
 
         # Inserisce n_campi righe con match = NULL
-        for index in range(n_campi):
-            girone=(index+1)//2
+        for _ in range(n_campi):
+
             cur.execute("INSERT INTO Campi (match) VALUES (NULL);")
     # commit e close automatici
 
