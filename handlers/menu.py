@@ -59,7 +59,7 @@ async def mostra_menu_principale(update: Update, context: ContextTypes.DEFAULT_T
 
 # raccoglitore foto funziona
 
-FOTO_DIR = "C:\\Users\\giorg\\PycharmProjects\\Torneo_Bot\\Foto\\foto emiliana"
+FOTO_DIR = ".\\Foto\\foto emiliana"
 os.makedirs(FOTO_DIR, exist_ok=True)
 
 async def ricevi_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
