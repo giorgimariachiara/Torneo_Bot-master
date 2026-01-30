@@ -6,7 +6,7 @@ import asyncio
 from utils import globals
 
 #Cambiare questa variabile in base al numero di campi che si hanno
-MAX_PARTITE_IN_CORSO = 6
+MAX_PARTITE_IN_CORSO = 8
 #generazione tabella Campi
 def genera_tabella_campi(n_campi):
     import sqlite3
@@ -21,7 +21,8 @@ def genera_tabella_campi(n_campi):
         cur.execute("DELETE FROM sqlite_sequence WHERE name='Campi';")
 
         # Inserisce n_campi righe con match = NULL
-        for _ in range(n_campi):
+        for index in range(n_campi):
+            girone=(index+1)//2
             cur.execute("INSERT INTO Campi (match) VALUES (NULL);")
     # commit e close automatici
 

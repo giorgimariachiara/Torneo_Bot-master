@@ -9,6 +9,23 @@ EVENTO_CHIUSO = False
 
 TASKS_IN_ATTESA: Dict[str, asyncio.Task] = {}
 
+config_torneo = {
+    12: {"num_gironi": 2, "numero_campi": 4},
+    13: {"num_gironi": 2, "numero_campi": 4},
+    14: {"num_gironi": 2, "numero_campi": 4},
+    15: {"num_gironi": 2, "numero_campi": 4},
+    16: {"num_gironi": 2, "numero_campi": 4},
+    17: {"num_gironi": 2, "numero_campi": 4},
+
+    18: {"num_gironi": 4, "numero_campi": 2},
+    19: {"num_gironi": 4, "numero_campi": 2},
+    20: {"num_gironi": 4, "numero_campi": 2},
+    21: {"num_gironi": 4, "numero_campi": 2},
+    22: {"num_gironi": 4, "numero_campi": 2},
+    23: {"num_gironi": 4, "numero_campi": 2},
+    24: {"num_gironi": 4, "numero_campi": 2},
+}
+
 
 # PERMESSI
 
