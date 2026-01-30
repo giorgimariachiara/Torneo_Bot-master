@@ -39,9 +39,9 @@ async def mostra_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ["📜 Regolamento della gara"],
         ["📊 Classifica in tempo reale"],
         ["🔥 Partite in corso"],
-        ["🍔 Menu cibo"],
+        #["🍔 Menu cibo"],
         ["🛍 Merchandising"],
-        ["🎮 Mini Giochi"],
+        #["🎮 Mini Giochi"],
         ["🤖 Spiegazione bot"],
         ["🔙 Torna indietro"]
     ]
