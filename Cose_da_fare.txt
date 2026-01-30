@@ -2,16 +2,12 @@ chiede
 
 Cose da fare
 
-*cose non urgenti*
+-- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
+-- sistemare il matchmaking con il controllo dello stesso girone
 
-18. registra_partita -> aggiungere possibilità di aggiungere punteggio anche se non sei di quella squadra
+-- convertire la foro di ritorno della classifica aggiungendo i gironi
 
-*cose urgenti*
-
-
-
-
-problemi usciti al test
+-- sistemare le risposte nelle info adattandole al torneo nuovo
 
 
 
@@ -28,16 +24,4 @@ problemi usciti al test
 
 
 
-Cose fatte
-1. start funziona
-2. registrazione funziona
-3.comandi admin funzionano
-4. menu a posto
 
-6. info funziona
-6a. info -> classifica funziona
-7. generazione lista match (ogni volta che si aggiunge una squadra)
-8. operations
-9. creare funzione per resettare utente, cancella utente e id dalla tabella e lo toglie dalla squadra_tabella_giocatori
-
-Ultima cosa fatta:
