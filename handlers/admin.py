@@ -18,6 +18,9 @@ SCELTA_PARTITA, INSERISCI_PUNTEGGIO = range(2)
 
 # --- Comandi diretti --- #
 async def pulisci_tutte_le_tabelle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMINS and update.effective_user.id not in CAPI:
+        await update.message.reply_text("🚫 Non sei autorizzato.")
+        return
     try:
         with sqlite3.connect(DB_PATH) as conn:
             cur = conn.cursor()
