@@ -17,6 +17,7 @@ fatto -- sistemare il matchmaking con il controllo dello stesso girone
 
 
 per aprire db:  sqlite_web .\Torneo_Molkky.db
+per aprire db des:  sqlite_web ./Torneo_Molkky.db
 
 
 
