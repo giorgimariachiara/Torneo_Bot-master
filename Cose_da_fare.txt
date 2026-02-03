@@ -9,6 +9,8 @@ Cose da fare
 
 -- sistemare le risposte nelle info adattandole al torneo nuovo
 
+per aprire db:  sqlite_web .\Torneo_Molkky.db
+
 
 
 

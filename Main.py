@@ -30,6 +30,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("Chiusura_Evento", chiusura_evento_command))
     app.add_handler(CommandHandler("Fine_Torneo", fine_torneo_command))
     app.add_handler(CommandHandler("Inizio", inizio_torneo))
+    app.add_handler(CommandHandler("Pulisci",pulisci_tutte_le_tabelle))
     app.add_handler(aggiunta_squadra_handler)
     app.add_handler(admin_modifica_punteggio)
     app.add_handler(broadcast_handler)

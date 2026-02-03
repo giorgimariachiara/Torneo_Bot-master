@@ -14,8 +14,8 @@ config_torneo = {
     13: {"num_gironi": 2, "numero_campi": 4},
     14: {"num_gironi": 2, "numero_campi": 4},
     15: {"num_gironi": 2, "numero_campi": 4},
-    16: {"num_gironi": 2, "numero_campi": 4},
-    17: {"num_gironi": 2, "numero_campi": 4},
+    16: {"num_gironi": 4, "numero_campi": 2},
+    17: {"num_gironi": 4, "numero_campi": 2},
 
     18: {"num_gironi": 4, "numero_campi": 2},
     19: {"num_gironi": 4, "numero_campi": 2},

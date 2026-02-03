@@ -21,6 +21,7 @@ async def set_comandi_utente(bot, user_id: int):
         BotCommand("cancella_utente", "Rimuove un utente dal sistema"),
         BotCommand("modifica_punteggio", "Modifica punteggio partita"),
         BotCommand("inizio", "inizia la registrazione giocatori"),
+        BotCommand('pulisci','Pulizia di tutte le entry di tutte le tabelle')
     ]
 
     comandi_capo = [
