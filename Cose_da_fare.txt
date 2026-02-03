@@ -1,13 +1,20 @@
-chiede
 
 Cose da fare
 
--- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
--- sistemare il matchmaking con il controllo dello stesso girone
+fatto -- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
+fatto -- sistemare il matchmaking con il controllo dello stesso girone
 
--- convertire la foro di ritorno della classifica aggiungendo i gironi
+-- assegnazione campi ai gironi
+-- partite legate ai campi
+-- convertire la foto di ritorno della classifica aggiungendo i gironi
 
 -- sistemare le risposte nelle info adattandole al torneo nuovo
+
+
+
+
+
+
 
 per aprire db:  sqlite_web .\Torneo_Molkky.db
 
