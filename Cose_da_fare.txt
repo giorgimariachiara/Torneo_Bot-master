@@ -7,13 +7,12 @@ fatto -- assegnazione campi ai gironi
 fatto -- convertire la foto di ritorno della classifica aggiungendo i gironi
 sistemato info.partite in corso
 
-da controllare -- partite legate ai campi
 
 -- sistemare comandi per il giorno giusto
 
 
 
-
+da controllare -- partite legate ai campi
 da controllare -- sistemare le risposte nelle info adattandole al torneo nuovo
 
 lista comandi per il grande giorno:
