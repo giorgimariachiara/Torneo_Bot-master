@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 #MessageHandler(filters.TEXT & filters.Regex("^🪿 Bonus & Malus$"), gestisci_scelta_minigioco),
                 #MessageHandler(filters.TEXT & filters.Regex("^🎯 Allenamento Plus$"), gestisci_scelta_minigioco),
                 #MessageHandler(filters.TEXT & filters.Regex("^🍔 Menu cibo$"), invia_menu_cibo),
-                MessageHandler(filters.TEXT & filters.Regex("^🛍 Merchandising$"), invia_merchandising),
+                #MessageHandler(filters.TEXT & filters.Regex("^🛍 Merchandising$"), invia_merchandising),
                 MessageHandler(filters.TEXT & filters.Regex("^🤖 Spiegazione bot$"), invia_spiegazione_bot),
                 MessageHandler(filters.TEXT & filters.Regex("^🔙 Torna indietro$"), torna_al_menu),
                 MessageHandler(filters.ALL, mostra_info)

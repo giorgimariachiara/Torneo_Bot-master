@@ -40,7 +40,7 @@ async def mostra_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ["📊 Classifica in tempo reale"],
         ["🔥 Partite in corso"],
         #["🍔 Menu cibo"],
-        ["🛍 Merchandising"],
+        #["🛍 Merchandising"],
         #["🎮 Mini Giochi"],
         ["🤖 Spiegazione bot"],
         ["🔙 Torna indietro"]
@@ -55,7 +55,7 @@ async def mostra_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return INFO
 
-async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
+'''async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('info -> invia_regolamento')
     await update.message.reply_text(
         "📜 *Regolamento del Torneo*\n\n"
@@ -80,11 +80,40 @@ async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
     await mostra_menu_principale(update, context)
+    return MENU'''
+
+async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print('info -> invia_regolamento')
+    await update.message.reply_text(
+        "📜 *Regolamento del Torneo*\n\n"
+        "🕒 *Formula: Gironi preliminari*\n"
+        "Squadre composte da 2 giocatori.\n"
+        "Durante il torneo, le squadre si sfidano continuamente in partite da *2 set*.\n"
+        "Le squadre vengono suddivise in vari *gironi*.\n"
+        "Chi vuole giocare segnala la disponibilità, chi vuole riposare può farlo 😎\n\n"
+        "🎮 *Come funziona:*\n"
+        "1. Quando ti senti pronto, clicca su *🎖 Voglio giocare* per partecipare\n"
+        "2. Il bot forma le partite e assegna gli avversari 👥\n"
+        "3. Le partite sono a *2 set*: affronterai solo squadre del tuo *girone*\n"
+        "4. A fine set inserisci il punteggio tramite *📝 Registra punteggio* "
+        "(basta che lo faccia uno dei due giocatori) e la partita viene registrata\n\n"
+        "🏆 *Classifica:*\n"
+        "Ogni vittoria ti avvicina al podio!\n"
+        "Al termine dei gironi, le migliori squadre di ogni girone passeranno ai *quarti di finale*\n\n"
+        "📌 *Note:*\n"
+        "- Ogni set viene conteggiato come una partita, ma i due set vengono disputati di seguito\n"
+        "- Si lascerà il tempo per concludere tutte le partite già iniziate\n"
+        "- In caso di parità vittorie, si contano i *punti totali* fatti\n\n"
+        "Buon divertimento e che vinca la squadra più agguerrita! 🔥",
+        parse_mode="Markdown"
+    )
+    await mostra_menu_principale(update, context)
     return MENU
+
 
 #---------------------------CLASSIFICA----------------------------------#
 
-async def invia_classifica(update: Update, context: CallbackContext):
+'''async def invia_classifica(update: Update, context: CallbackContext):
     path_img = calcola_classifica(update.effective_user.id)
     with open(path_img, 'rb') as f:
         await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
@@ -191,7 +220,171 @@ def genera_classifica_con_pillow(dati, squadra_utente, output_folder=OUTPUT_CLAS
     draw.line([PADDING, y, img_w - PADDING, y], fill=BORDER_COLOR, width=1)
 
     img.save(filepath)
+    return filepath'''
+
+# Calcolo classifica con evidenziazione squadra utente, divisa per gironi (senza emoji)
+
+async def invia_classifica(update: Update, context: CallbackContext):
+    path_img = calcola_classifica(update.effective_user.id)
+    with open(path_img, 'rb') as f:
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=f)
+
+    if os.path.exists(path_img):
+        os.remove(path_img)
+
+    await mostra_menu_principale(update, context)
+    return MENU
+
+
+def calcola_classifica(user_id: int) -> str:
+    print('info -> calcola_classifica')
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+
+        # Squadra utente (se giocante)
+        cur.execute(
+            "SELECT Squadra FROM Utenti WHERE ID_Telegram = ? AND Giocante = 1",
+            (user_id,)
+        )
+        user_squadra_row = cur.fetchone()
+        user_squadra = user_squadra_row[0] if user_squadra_row else None
+
+        # Classifica con girone
+        cur.execute("""
+            SELECT Girone, Nome_Squadra, Partite_Giocate, Vittorie, Punti
+            FROM Squadre
+            ORDER BY Girone ASC, Vittorie DESC, Punti DESC
+        """)
+        risultati = cur.fetchall()
+
+    if not risultati:
+        return "❌ Nessuna squadra registrata."
+
+    # Raggruppa per girone: {girone: [(nome, giocate, vinte, punti), ...]}
+    gironi: dict[int, list[tuple[str, int, int, int]]] = {}
+    for girone, nome, giocate, vinte, punti in risultati:
+        gironi.setdefault(int(girone), []).append((nome, int(giocate or 0), int(vinte or 0), int(punti or 0)))
+
+    return genera_classifica_gironi_con_pillow(gironi, user_squadra)
+
+
+# --------------------- RENDERIZZAZIONE IMMAGINE (DIVISA PER GIRONE) --------------------- #
+
+def genera_classifica_gironi_con_pillow(
+    gironi: dict[int, list[tuple[str, int, int, int]]],
+    squadra_utente: str | None,
+    output_folder: str = OUTPUT_CLASSIFICA_PATH
+) -> str:
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Caching (include gironi + squadra utente)
+    raw = ""
+    for g in sorted(gironi.keys()):
+        raw += f"G{g}:" + "".join([f"{n}-{pg}-{v}-{p}|" for (n, pg, v, p) in gironi[g]])
+    raw += (squadra_utente or "")
+    hash_id = hashlib.md5(raw.encode()).hexdigest()
+    filepath = os.path.join(output_folder, f"classifica_{hash_id}.png")
+    if os.path.exists(filepath):
+        return filepath
+
+    # Font
+    try:
+        font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
+        header_font = ImageFont.truetype(FONT_PATH, FONT_SIZE + 4)
+        title_font = ImageFont.truetype(FONT_PATH, FONT_SIZE + 6)
+    except IOError:
+        font = ImageFont.load_default()
+        header_font = font
+        title_font = font
+        print("⚠️ Font non trovato, uso font di default.")
+
+    # Costruzione righe "piatte" con separatori di girone
+    # Ogni elemento: ("type", payload)
+    # type = "title" -> ("Girone X",)
+    # type = "header" -> ("Squadra","V/PG","Punti")
+    # type = "row" -> (nome_display, vgpg, punti, evidenziata)
+    blocks = []
+    for g in sorted(gironi.keys()):
+        blocks.append(("title", (f"Girone {g}",)))
+        blocks.append(("header", ("Squadra", "V/PG", "Punti")))
+        dati = gironi[g]
+        for i, (nome, giocate, vinte, punti) in enumerate(dati, start=1):
+            evid = (nome == squadra_utente)
+            nome_display = f"{i}. {nome}" + ("  👈" if evid else "")
+            blocks.append(("row", (nome_display, f"{vinte} / {giocate}", str(punti), evid)))
+        blocks.append(("spacer", ("",)))
+
+    # Calcolo larghezze colonne (solo per header/row)
+    col_widths = [0, 0, 0]
+    for t, payload in blocks:
+        if t == "header":
+            for idx, txt in enumerate(payload):
+                w = int(header_font.getbbox(txt)[2])
+                col_widths[idx] = max(col_widths[idx], w)
+        elif t == "row":
+            nome_display, vgpg, pt, _ = payload
+            for idx, txt in enumerate((nome_display, vgpg, pt)):
+                w = int(font.getbbox(txt)[2])
+                col_widths[idx] = max(col_widths[idx], w)
+
+    col_pads = [10, 20, 20]
+    row_h = font.getbbox("Ay")[3] + LINE_SPACING
+    title_h = title_font.getbbox("Ay")[3] + LINE_SPACING + 6
+
+    # Altezza totale
+    total_h = PADDING * 2
+    for t, _ in blocks:
+        if t == "title":
+            total_h += title_h
+        elif t in ("header", "row"):
+            total_h += row_h
+        elif t == "spacer":
+            total_h += row_h // 2
+
+    img_w = sum(col_widths[i] + col_pads[i] for i in range(3)) + 2 * PADDING
+    img_h = total_h + 10
+
+    img = Image.new("RGB", (img_w, img_h), BG_COLOR)
+    draw = ImageDraw.Draw(img)
+
+    y = PADDING
+
+    for t, payload in blocks:
+        if t == "title":
+            # Spazio prima del titolo (tranne il primo)
+            draw.text((PADDING, y), payload[0], font=title_font, fill=TEXT_COLOR)
+            y += title_h
+
+        elif t == "header":
+            x = PADDING
+            for idx, txt in enumerate(payload):
+                draw.text((x, y), txt, font=header_font, fill=TEXT_COLOR)
+                x += col_widths[idx] + col_pads[idx]
+            y += row_h
+            draw.line([PADDING, y, img_w - PADDING, y], fill=BORDER_COLOR, width=1)
+
+        elif t == "row":
+            nome_display, vgpg, pt, evid = payload
+            x = PADDING
+
+            # Riga separatrice
+            draw.line([PADDING, y, img_w - PADDING, y], fill=BORDER_COLOR, width=1)
+
+            # (Opzionale) evidenziazione: mantengo l'idea senza cambiare stile globale
+            # Se vuoi proprio evidenziare, puoi mettere un rettangolo di sfondo qui.
+            for idx, txt in enumerate((nome_display, vgpg, pt)):
+                draw.text((x, y + LINE_SPACING // 2), txt, font=font, fill=TEXT_COLOR)
+                x += col_widths[idx] + col_pads[idx]
+            y += row_h
+
+        elif t == "spacer":
+            y += row_h // 2
+
+    draw.line([PADDING, y, img_w - PADDING, y], fill=BORDER_COLOR, width=1)
+
+    img.save(filepath)
     return filepath
+
 
 
 #-------------------------MENU CIBO------------------------------------#
@@ -224,16 +417,16 @@ async def invia_spiegazione_bot(update: Update, context: ContextTypes.DEFAULT_TY
         "📸 *Foto*\n"
         "Carica una tua foto per rendere il torneo ancora più divertente!\nNon ti preoccupare, poi le condividiamo.\n\n"
         "🍔 *Info extra*\n"
-        "Troverai anche il regolamento del torneo, il menu cibo e tante altre informazioni utili\n\n"
+        "Troverai anche il regolamento del torneo  e tante altre informazioni utili\n\n"
         "Fai festa e offri una birra 🍻 a chi vuoi!\n\n"
-        "Bot sviluppato da Luca Midali e Giorgio Cortinovis per L'Emiliana Mölkky",
+        "Bot sviluppato da Luca Midali e Giorgio Cortinovis per L'Emiliana Mölkky, con il supporto di Despina",
         parse_mode="Markdown"
     )
     await mostra_menu_principale(update, context)
     return MENU
 
 
-async def invia_partite_in_corso(update: Update, context: ContextTypes.DEFAULT_TYPE):
+'''async def invia_partite_in_corso(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("info -> invia_partite_in_corso")
 
     try:
@@ -263,7 +456,60 @@ async def invia_partite_in_corso(update: Update, context: ContextTypes.DEFAULT_T
         print("[ERRORE] invia_partite_in_corso:", e)
         await update.message.reply_text("⚠️ Errore nel recuperare le partite in corso.")
         await mostra_menu_principale(update, context)
+        return MENU '''
+
+async def invia_partite_in_corso(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("info -> invia_partite_in_corso (da Campi)")
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+
+            # Legge dalle righe dei campi occupati: Match valorizzato => partita in corso/assegnata
+            cur.execute("""
+                SELECT id_campo, Girone, Match
+                FROM Campi
+                WHERE Match IS NOT NULL
+                  AND TRIM(Match) != ''
+                ORDER BY Girone, Match
+            """)
+            righe = cur.fetchall()
+
+        if not righe:
+            await update.message.reply_text("🚫 Nessuna partita attualmente in corso.")
+            await mostra_menu_principale(update, context)
+            return MENU
+
+        messaggio = "🎯 *Partite attualmente in corso :*\n\n"
+
+        girone_corrente = None
+        for id_campo, girone, match_nome in righe:
+            if girone != girone_corrente:
+                if girone_corrente is not None:
+                    messaggio += "\n"  # spazio tra i gironi
+                girone_corrente = girone
+                messaggio += f"🏁 *Girone {girone}*\n"
+
+            squadre = str(match_nome).split("-")
+            if len(squadre) == 2:
+                messaggio += (
+                    f"➡️ Campo *{id_campo}*: "
+                    f"*{squadre[0].strip()}* vs *{squadre[1].strip()}*\n"
+                )
+            else:
+                messaggio += f"➡️ Campo *{id_campo}*: {match_nome}\n"
+
+            # Riga vuota tra gironi/partite (opzionale)
+        await update.message.reply_text(messaggio, parse_mode="Markdown")
+        await mostra_menu_principale(update, context)
         return MENU
+
+    except Exception as e:
+        print("[ERRORE] invia_partite_in_corso:", e)
+        await update.message.reply_text("⚠️ Errore nel recuperare le partite in corso.")
+        await mostra_menu_principale(update, context)
+        return MENU
+
 
 async def invia_merchandising(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('info -> invia_merchandising')
