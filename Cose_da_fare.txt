@@ -9,12 +9,23 @@ sistemato info.partite in corso
 
 da controllare -- partite legate ai campi
 
+-- sistemare comandi per il giorno giusto
+
 
 
 
 da controllare -- sistemare le risposte nelle info adattandole al torneo nuovo
 
+lista comandi per il grande giorno:
+-- /pulisci              pulisce tutte le tabelle e resetta il bot
+-- /inizio               accende il bot a tutte le persone non admin
+-- /chiusura_evento      termina la possibilità di dare disponibilità e lascia finire le partite
+-- /fine_torneo          termina il torneo a gironi e estrae i quarti di finali
 
+
+extra:
+/pausa     mette in pausa il tonero
+/riprendi  riprende dopo la pausa
 
 
 
