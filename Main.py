@@ -63,7 +63,7 @@ if __name__ == '__main__':
                 MessageHandler(filters.TEXT & filters.Regex("^📝 Registra punteggio$"), gestione_partite),
                 MessageHandler(filters.TEXT & filters.Regex("^📸 Foto$"), richiedi_foto),
                 MessageHandler(filters.PHOTO, ricevi_foto),
-                MessageHandler(filters.ALL, mostra_menu_principale)
+                MessageHandler(filters.ALL, mostra_menu_principale),
             ],
 
             # Stato 2: RICHIESTA INFORMAZIONI
@@ -107,6 +107,8 @@ if __name__ == '__main__':
         allow_reentry=True,
     )
     app.add_handler(CallbackQueryHandler(conferma_prontezza, pattern=r"^(pronti|rifiuto)_.*_\d+$"))
+    app.add_handler(CallbackQueryHandler(conferma_prontezza, pattern=r"^(pronti|rifiuto)\|"))
+
     app.add_handler(conv_handler)
 
 

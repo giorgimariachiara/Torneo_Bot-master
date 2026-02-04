@@ -333,7 +333,7 @@ async def chiusura_evento_command(update: Update, context: ContextTypes.DEFAULT_
 
 
 # Gestione chiusura torneo
-async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+'''async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("admin -> fine_torneo_command")
 
     if update.effective_user.id not in ADMINS:
@@ -387,7 +387,149 @@ async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             print(f"[Errore invio a {user_id}]: {e}")
 
     # Conferma la chiusura al comando admin
-    await update.message.reply_text("✅ Torneo terminato. Tutti sono ora osservatori. Le semifinali sono in arrivo.")
+    await update.message.reply_text("✅ Torneo terminato. Tutti sono ora osservatori. Le semifinali sono in arrivo.")'''
+
+import sqlite3
+import random
+from telegram import Update
+from telegram.ext import ContextTypes
+
+async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("admin -> fine_torneo_command")
+
+    if update.effective_user.id not in ADMINS:
+        await update.message.reply_text("🚫 Non sei autorizzato.")
+        return
+
+    # Verifica se ci sono partite "in gioco"
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM Partite WHERE Status_Partita = 'in gioco'")
+        partite_in_corso = cur.fetchone()[0]
+
+    if partite_in_corso > 0:
+        await update.message.reply_text("❌ C'è ancora una partita in corso. Non è possibile chiudere il torneo.")
+        return
+
+    # Leggi classifica per girone + lista utenti
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+
+        # Gironi presenti
+        cur.execute("SELECT DISTINCT Girone FROM Squadre ORDER BY Girone")
+        gironi = [r[0] for r in cur.fetchall()]
+
+        # Classifica completa (per girone)
+        cur.execute("""
+            SELECT Girone, Nome_Squadra, Partite_Giocate, Vittorie, Punti
+            FROM Squadre
+            ORDER BY Girone ASC, Vittorie DESC, Punti DESC
+        """)
+        righe = cur.fetchall()
+
+        # Utenti
+        cur.execute("SELECT ID_Telegram FROM Utenti")
+        utenti = [r[0] for r in cur.fetchall()]
+
+    # Raggruppa per girone
+    classifica_per_girone = {}
+    for g, nome, giocate, vinte, punti in righe:
+        classifica_per_girone.setdefault(g, []).append((nome, giocate, vinte, punti))
+
+    # ------------------ MESSAGGIO 1: CLASSIFICA PER GIRONE ------------------ #
+    msg_classifica = "⛔ *Fine del torneo!*\n\n" \
+                     "Il torneo è terminato. Le partite sono concluse.\n" \
+                     "Complimenti a tutti i partecipanti.\n\n" \
+                     "🏆 *Classifica finale (per girone):*\n\n"
+
+    for g in gironi:
+        msg_classifica += f"🏁 *Girone {g}*\n"
+        lista = classifica_per_girone.get(g, [])
+        if not lista:
+            msg_classifica += "_Nessuna squadra_\n\n"
+            continue
+
+        for i, (nome, giocate, vinte, punti) in enumerate(lista, start=1):
+            msg_classifica += f"{i}. `{nome}`  (V: {vinte} | PG: {giocate} | P: {punti})\n"
+        msg_classifica += "\n"
+
+    # ------------------ MESSAGGIO 2: SORTEGGIO QUARTI ------------------ #
+    # Regole:
+    # - Se 2 gironi: prendi top 4 per girone -> 8 squadre -> 4 match, sempre cross-girone.
+    # - Se 4 gironi: prendi top 2 per girone -> 8 squadre -> 4 match, evitando match stesso girone.
+
+    msg_quarti = "🎲 *Sorteggio Quarti di Finale*\n\n"
+
+    def pick_top(girone, n):
+        return [nome for (nome, _, _, _) in classifica_per_girone.get(girone, [])[:n]]
+
+    match_quarti = []
+
+    if len(gironi) == 2:
+        g1, g2 = gironi[0], gironi[1]
+        top_g1 = pick_top(g1, 4)
+        top_g2 = pick_top(g2, 4)
+
+        if len(top_g1) < 4 or len(top_g2) < 4:
+            msg_quarti += "❌ Impossibile generare i quarti: servono almeno 4 squadre per girone."
+        else:
+            random.shuffle(top_g2)
+            match_quarti = list(zip(top_g1, top_g2))
+
+    elif len(gironi) == 4:
+        # pot A = prime classificate di ogni girone, pot B = seconde classificate di ogni girone
+        potA = []
+        potB = []
+        for g in gironi:
+            top2 = pick_top(g, 2)
+            if len(top2) < 2:
+                potA = []
+                potB = []
+                break
+            potA.append((g, top2[0]))
+            potB.append((g, top2[1]))
+
+        if not potA or not potB:
+            msg_quarti += "❌ Impossibile generare i quarti: servono almeno 2 squadre per girone."
+        else:
+            random.shuffle(potA)
+
+            # Shuffle potB finché non si accoppia stesso girone
+            for _ in range(50):
+                random.shuffle(potB)
+                if all(potA[i][0] != potB[i][0] for i in range(4)):
+                    break
+
+            if not all(potA[i][0] != potB[i][0] for i in range(4)):
+                # fallback: accoppiamento manuale semplice (swap) se proprio serve
+                for i in range(4):
+                    if potA[i][0] == potB[i][0]:
+                        for j in range(4):
+                            if i != j and potA[i][0] != potB[j][0] and potA[j][0] != potB[i][0]:
+                                potB[i], potB[j] = potB[j], potB[i]
+                                break
+
+            match_quarti = [(potA[i][1], potB[i][1]) for i in range(4)]
+
+    else:
+        msg_quarti += f"❌ Sorteggio non gestito: trovati {len(gironi)} gironi (supportati: 2 o 4)."
+
+    if match_quarti:
+        for i, (a, b) in enumerate(match_quarti, start=1):
+            msg_quarti += f"{i}. `{a}` vs `{b}`\n"
+
+        msg_quarti += "\n📌 Regola: ogni sfida è tra squadre di gironi diversi."
+
+    # ------------------ INVIO A TUTTI ------------------ #
+    for user_id in utenti:
+        try:
+            await context.bot.send_message(user_id, msg_classifica, parse_mode="Markdown")
+            await context.bot.send_message(user_id, msg_quarti, parse_mode="Markdown")
+        except Exception as e:
+            print(f"[Errore invio a {user_id}]: {e}")
+
+    await update.message.reply_text("✅ Torneo terminato. Inviata classifica per girone + sorteggio quarti a tutti.")
+
 
 
 # Gestione modifica punteggio
