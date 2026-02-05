@@ -1,6 +1,9 @@
 
 Cose da fare
 
+-- invece di ritorno immediato, indica che bisogna registrare il punteggio della seconda partita
+-- cambiare diciture partite con set sg-pg
+
 fatto -- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
 fatto -- sistemare il matchmaking con il controllo dello stesso girone
 fatto -- assegnazione campi ai gironi
