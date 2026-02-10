@@ -30,6 +30,7 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("Chiusura_Evento", chiusura_evento_command))
     app.add_handler(CommandHandler("Fine_Torneo", fine_torneo_command))
     app.add_handler(CommandHandler("Inizio", inizio_torneo))
+    app.add_handler(CommandHandler("Pulisci",pulisci_tutte_le_tabelle))
     app.add_handler(aggiunta_squadra_handler)
     app.add_handler(admin_modifica_punteggio)
     app.add_handler(broadcast_handler)
@@ -62,7 +63,7 @@ if __name__ == '__main__':
                 MessageHandler(filters.TEXT & filters.Regex("^📝 Registra punteggio$"), gestione_partite),
                 MessageHandler(filters.TEXT & filters.Regex("^📸 Foto$"), richiedi_foto),
                 MessageHandler(filters.PHOTO, ricevi_foto),
-                MessageHandler(filters.ALL, mostra_menu_principale)
+                MessageHandler(filters.ALL, mostra_menu_principale),
             ],
 
             # Stato 2: RICHIESTA INFORMAZIONI
@@ -72,12 +73,12 @@ if __name__ == '__main__':
                 MessageHandler(filters.TEXT & filters.Regex("^📜 Regolamento della gara$"), invia_regolamento),
                 MessageHandler(filters.TEXT & filters.Regex("^📊 Classifica in tempo reale$"), invia_classifica),
                 MessageHandler(filters.TEXT & filters.Regex("^🔥 Partite in corso$"), invia_partite_in_corso),
-                MessageHandler(filters.TEXT & filters.Regex("^🎮 Mini Giochi$"), mostra_menu_minigiochi),
-                MessageHandler(filters.TEXT & filters.Regex("^🎰 Roulette!$"), gestisci_scelta_minigioco),
-                MessageHandler(filters.TEXT & filters.Regex("^🪿 Bonus & Malus$"), gestisci_scelta_minigioco),
-                MessageHandler(filters.TEXT & filters.Regex("^🎯 Allenamento Plus$"), gestisci_scelta_minigioco),
-                MessageHandler(filters.TEXT & filters.Regex("^🍔 Menu cibo$"), invia_menu_cibo),
-                MessageHandler(filters.TEXT & filters.Regex("^🛍 Merchandising$"), invia_merchandising),
+                #MessageHandler(filters.TEXT & filters.Regex("^🎮 Mini Giochi$"), mostra_menu_minigiochi),
+                #MessageHandler(filters.TEXT & filters.Regex("^🎰 Roulette!$"), gestisci_scelta_minigioco),
+                #MessageHandler(filters.TEXT & filters.Regex("^🪿 Bonus & Malus$"), gestisci_scelta_minigioco),
+                #MessageHandler(filters.TEXT & filters.Regex("^🎯 Allenamento Plus$"), gestisci_scelta_minigioco),
+                #MessageHandler(filters.TEXT & filters.Regex("^🍔 Menu cibo$"), invia_menu_cibo),
+                #MessageHandler(filters.TEXT & filters.Regex("^🛍 Merchandising$"), invia_merchandising),
                 MessageHandler(filters.TEXT & filters.Regex("^🤖 Spiegazione bot$"), invia_spiegazione_bot),
                 MessageHandler(filters.TEXT & filters.Regex("^🔙 Torna indietro$"), torna_al_menu),
                 MessageHandler(filters.ALL, mostra_info)
@@ -106,6 +107,8 @@ if __name__ == '__main__':
         allow_reentry=True,
     )
     app.add_handler(CallbackQueryHandler(conferma_prontezza, pattern=r"^(pronti|rifiuto)_.*_\d+$"))
+    app.add_handler(CallbackQueryHandler(conferma_prontezza, pattern=r"^(pronti|rifiuto)\|"))
+
     app.add_handler(conv_handler)
 
 

@@ -1,5 +1,5 @@
 # handlers/admin.py
-
+import random
 
 from telegram import Update, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, ConversationHandler, filters, \
@@ -15,7 +15,41 @@ ATTESA_NOME_SQUADRA = 1
 # Stato per modifica punteggio
 SCELTA_PARTITA, INSERISCI_PUNTEGGIO = range(2)
 
+
 # --- Comandi diretti --- #
+async def pulisci_tutte_le_tabelle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMINS and update.effective_user.id not in CAPI:
+        await update.message.reply_text("🚫 Non sei autorizzato.")
+        return
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cur = conn.cursor()
+
+            # Recupera i nomi di tutte le tabelle create dall'utente
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+            tabelle = cur.fetchall()
+
+            for tabella in tabelle:
+                nome_tabella = tabella[0]
+
+                # ESCLUSIONE: Se la tabella si chiama 'Campi', saltala
+                if nome_tabella.lower() == "campi":
+                    print(f"[SKIP] Tabella '{nome_tabella}' preservata.")
+                    continue
+
+                cur.execute(f"DELETE FROM {nome_tabella}")
+                print(f"[INFO] Tabella '{nome_tabella}' svuotata.")
+
+            # Resetta i contatori degli ID (per far ripartire gli ID da 1 nelle tabelle pulite)
+            cur.execute("DELETE FROM sqlite_sequence WHERE name != 'Campi'")
+
+            conn.commit()
+
+        await update.message.reply_text("✅ Database pulito! (La tabella Campi è stata preservata)")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ Errore durante la pulizia: {e}")
+
 
 async def lista_utenti_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('admin -> lista_utenti_command')
@@ -38,6 +72,7 @@ async def lista_utenti_command(update: Update, context: ContextTypes.DEFAULT_TYP
             messaggio += f"{giocante} {u[1]} (ID: {u[0]}) - Squadra: {squadra}\n"
         await update.message.reply_text(messaggio)
 
+
 async def cancella_utente_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('admin -> cancella_utente_command')
     if update.effective_user.id not in ADMINS:
@@ -51,6 +86,7 @@ async def cancella_utente_command(update: Update, context: ContextTypes.DEFAULT_
 
     cancella_utente_completo(user_id)
     await update.message.reply_text(f"🗑️ Utente {user_id} cancellato.")
+
 
 async def cancella_squadra_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('admin -> cancella_squadra_command')
@@ -68,8 +104,9 @@ async def cancella_squadra_command(update: Update, context: ContextTypes.DEFAULT
         return
 
     cancella_squadra_completa(nome_squadra.upper())
-    await update.message.reply_text(f"🗑️ Squadra `{nome_squadra}` cancellata.",parse_mode="Markdown",
-        reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text(f"🗑️ Squadra `{nome_squadra}` cancellata.", parse_mode="Markdown",
+                                    reply_markup=ReplyKeyboardRemove())
+
 
 # --- Flusso aggiunta squadra --- #
 
@@ -79,11 +116,17 @@ async def aggiungi_squadra_start(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("🚫 Non sei autorizzato.")
         return ConversationHandler.END
 
-    await update.message.reply_text("✏️ Inserisci il nome della nuova squadra e invia il messaggio.\n\nScrivi 'fine' quando hai finito di inserire squadre.")
+    await update.message.reply_text(
+        "✏️ Inserisci il nome della nuova squadra e invia il messaggio.\n\nScrivi 'fine' quando hai finito di inserire squadre.")
 
     return ATTESA_NOME_SQUADRA
 
+
+NUM_SQUADRA = 0
+
+
 async def ricevi_nome_squadra(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    global NUM_SQUADRA
     print('admin -> ricevi_nome_squadra')
     nome = update.message.text.strip().upper()
 
@@ -99,9 +142,12 @@ async def ricevi_nome_squadra(update: Update, context: ContextTypes.DEFAULT_TYPE
         return ATTESA_NOME_SQUADRA
 
     aggiungi_squadra(nome)
+
     await update.message.reply_text(f"✅ Squadra `{nome}` aggiunta con successo.", parse_mode="Markdown",
-        reply_markup=ReplyKeyboardRemove())
+                                    reply_markup=ReplyKeyboardRemove())
+    NUM_SQUADRA += 1
     return ATTESA_NOME_SQUADRA
+
 
 aggiunta_squadra_handler = ConversationHandler(
     entry_points=[CommandHandler("aggiungi_squadra", aggiungi_squadra_start)],
@@ -112,11 +158,13 @@ aggiunta_squadra_handler = ConversationHandler(
     name="aggiunta_squadra_conversation",
 )
 
-
 # messaggio a tutti gli utenti
 from telegram.constants import ParseMode
+
 # Stato per messaggio broadcast
 ATTESA_TESTO_BROADCAST = 1
+
+
 # --- Comando broadcast admin ---
 async def start_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     print('admin -> start_broadcast')
@@ -128,6 +176,7 @@ async def start_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text("✏️ Scrivi il messaggio da inviare a *tutti gli utenti* iscritti:",
                                     parse_mode=ParseMode.MARKDOWN)
     return ATTESA_TESTO_BROADCAST
+
 
 async def invia_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     print("admin -> invia_broadcast", update.message.text)
@@ -150,6 +199,7 @@ async def invia_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     return ConversationHandler.END
 
+
 broadcast_handler = ConversationHandler(
     entry_points=[CommandHandler("messaggio_tutti", start_broadcast)],
     states={
@@ -158,38 +208,39 @@ broadcast_handler = ConversationHandler(
     fallbacks=[],
     name="broadcast_conversation"
 )
+
+
 # comando modifica fine registrazioni
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 async def inizio_torneo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global NUM_SQUADRA
+
+    status = globals.config_torneo[NUM_SQUADRA]
+    num_gironi = status['num_gironi']
+    num_campi = status['numero_campi']
+    with sqlite3.connect("Torneo_Molkky.db") as conn:
+        cur = conn.cursor()
+
+        for index in range(8):
+            girone = (index // num_campi) + 1
+            cur.execute("UPDATE Campi SET Girone=? WHERE id_campo=?", (girone, index + 1,))
+            conn.commit()
+    with sqlite3.connect("Torneo_Molkky.db") as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT Nome_squadra FROM Squadre")
+        nome_squadre = [r[0] for r in cur.fetchall()]
+
+        random.shuffle(nome_squadre)
+        # assegnazioni = {}
+        for i, squadra in enumerate(nome_squadre):
+            girone = (i % num_gironi) + 1
+            # assegnazioni[squadra] = girone
+            cur.execute("UPDATE Squadre SET Girone=? WHERE Nome_squadra=?", (girone, squadra,))
+            conn.commit()
+    genera_tutti_i_match()
     globals.ISCRIZIONI = False
-    print(f"fine registrazioni" )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    print(f"fine registrazioni")
 
 
 #    GESTIONE PAUSA PRANZO
@@ -216,15 +267,16 @@ async def pausa_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_ids = get_tutti_user_id()
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, "⏸️ *Pausa!* Le partite sono temporaneamente sospese. ", parse_mode="Markdown")
+            await context.bot.send_message(user_id, "⏸️ *Pausa!* Le partite sono temporaneamente sospese. ",
+                                           parse_mode="Markdown")
         except Exception as e:
             print(f"Errore nell'invio a {user_id}: {e}")
 
     await update.message.reply_text("✅ Pausa attivata. Tutti gli utenti sono stati avvisati.")
 
+
 # comando per mettere in gioco disponibilità
 async def riprendi_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     print("admin -> riprendi_command")
 
     if update.effective_user.id not in ADMINS:
@@ -281,7 +333,7 @@ async def chiusura_evento_command(update: Update, context: ContextTypes.DEFAULT_
 
 
 # Gestione chiusura torneo
-async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+'''async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("admin -> fine_torneo_command")
 
     if update.effective_user.id not in ADMINS:
@@ -330,21 +382,158 @@ async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Invia il messaggio a tutti gli utenti
     for user_id in utenti:
         try:
-            await context.bot.send_message(user_id, messaggio, parse_mode = "Markdown")
+            await context.bot.send_message(user_id, messaggio, parse_mode="Markdown")
         except Exception as e:
             print(f"[Errore invio a {user_id}]: {e}")
 
     # Conferma la chiusura al comando admin
-    await update.message.reply_text("✅ Torneo terminato. Tutti sono ora osservatori. Le semifinali sono in arrivo.")
+    await update.message.reply_text("✅ Torneo terminato. Tutti sono ora osservatori. Le semifinali sono in arrivo.")'''
+
+import sqlite3
+import random
+from telegram import Update
+from telegram.ext import ContextTypes
+
+async def fine_torneo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("admin -> fine_torneo_command")
+
+    if update.effective_user.id not in ADMINS:
+        await update.message.reply_text("🚫 Non sei autorizzato.")
+        return
+
+    # Verifica se ci sono partite "in gioco"
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM Partite WHERE Status_Partita = 'in gioco'")
+        partite_in_corso = cur.fetchone()[0]
+
+    if partite_in_corso > 0:
+        await update.message.reply_text("❌ C'è ancora una partita in corso. Non è possibile chiudere il torneo.")
+        return
+
+    # Leggi classifica per girone + lista utenti
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+
+        # Gironi presenti
+        cur.execute("SELECT DISTINCT Girone FROM Squadre ORDER BY Girone")
+        gironi = [r[0] for r in cur.fetchall()]
+
+        # Classifica completa (per girone)
+        cur.execute("""
+            SELECT Girone, Nome_Squadra, Partite_Giocate, Vittorie, Punti
+            FROM Squadre
+            ORDER BY Girone ASC, Vittorie DESC, Punti DESC
+        """)
+        righe = cur.fetchall()
+
+        # Utenti
+        cur.execute("SELECT ID_Telegram FROM Utenti")
+        utenti = [r[0] for r in cur.fetchall()]
+
+    # Raggruppa per girone
+    classifica_per_girone = {}
+    for g, nome, giocate, vinte, punti in righe:
+        classifica_per_girone.setdefault(g, []).append((nome, giocate, vinte, punti))
+
+    # ------------------ MESSAGGIO 1: CLASSIFICA PER GIRONE ------------------ #
+    msg_classifica = "⛔ *Fine del torneo!*\n\n" \
+                     "Il torneo è terminato. Le partite sono concluse.\n" \
+                     "Complimenti a tutti i partecipanti.\n\n" \
+                     "🏆 *Classifica finale (per girone):*\n\n"
+
+    for g in gironi:
+        msg_classifica += f"🏁 *Girone {g}*\n"
+        lista = classifica_per_girone.get(g, [])
+        if not lista:
+            msg_classifica += "_Nessuna squadra_\n\n"
+            continue
+
+        for i, (nome, giocate, vinte, punti) in enumerate(lista, start=1):
+            msg_classifica += f"{i}. `{nome}`  (V: {vinte} | PG: {giocate} | P: {punti})\n"
+        msg_classifica += "\n"
+
+    # ------------------ MESSAGGIO 2: SORTEGGIO QUARTI ------------------ #
+    # Regole:
+    # - Se 2 gironi: prendi top 4 per girone -> 8 squadre -> 4 match, sempre cross-girone.
+    # - Se 4 gironi: prendi top 2 per girone -> 8 squadre -> 4 match, evitando match stesso girone.
+
+    msg_quarti = "🎲 *Sorteggio Quarti di Finale*\n\n"
+
+    def pick_top(girone, n):
+        return [nome for (nome, _, _, _) in classifica_per_girone.get(girone, [])[:n]]
+
+    match_quarti = []
+
+    if len(gironi) == 2:
+        g1, g2 = gironi[0], gironi[1]
+        top_g1 = pick_top(g1, 4)
+        top_g2 = pick_top(g2, 4)
+
+        if len(top_g1) < 4 or len(top_g2) < 4:
+            msg_quarti += "❌ Impossibile generare i quarti: servono almeno 4 squadre per girone."
+        else:
+            random.shuffle(top_g2)
+            match_quarti = list(zip(top_g1, top_g2))
+
+    elif len(gironi) == 4:
+        # pot A = prime classificate di ogni girone, pot B = seconde classificate di ogni girone
+        potA = []
+        potB = []
+        for g in gironi:
+            top2 = pick_top(g, 2)
+            if len(top2) < 2:
+                potA = []
+                potB = []
+                break
+            potA.append((g, top2[0]))
+            potB.append((g, top2[1]))
+
+        if not potA or not potB:
+            msg_quarti += "❌ Impossibile generare i quarti: servono almeno 2 squadre per girone."
+        else:
+            random.shuffle(potA)
+
+            # Shuffle potB finché non si accoppia stesso girone
+            for _ in range(50):
+                random.shuffle(potB)
+                if all(potA[i][0] != potB[i][0] for i in range(4)):
+                    break
+
+            if not all(potA[i][0] != potB[i][0] for i in range(4)):
+                # fallback: accoppiamento manuale semplice (swap) se proprio serve
+                for i in range(4):
+                    if potA[i][0] == potB[i][0]:
+                        for j in range(4):
+                            if i != j and potA[i][0] != potB[j][0] and potA[j][0] != potB[i][0]:
+                                potB[i], potB[j] = potB[j], potB[i]
+                                break
+
+            match_quarti = [(potA[i][1], potB[i][1]) for i in range(4)]
+
+    else:
+        msg_quarti += f"❌ Sorteggio non gestito: trovati {len(gironi)} gironi (supportati: 2 o 4)."
+
+    if match_quarti:
+        for i, (a, b) in enumerate(match_quarti, start=1):
+            msg_quarti += f"{i}. `{a}` vs `{b}`\n"
+
+        msg_quarti += "\n📌 Regola: ogni sfida è tra squadre di gironi diversi."
+
+    # ------------------ INVIO A TUTTI ------------------ #
+    for user_id in utenti:
+        try:
+            await context.bot.send_message(user_id, msg_classifica, parse_mode="Markdown")
+            await context.bot.send_message(user_id, msg_quarti, parse_mode="Markdown")
+        except Exception as e:
+            print(f"[Errore invio a {user_id}]: {e}")
+
+    await update.message.reply_text("✅ Torneo terminato. Inviata classifica per girone + sorteggio quarti a tutti.")
 
 
 
-
-
-
-#Gestione modifica punteggio
+# Gestione modifica punteggio
 async def inizia_modifica_punteggio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if update.effective_user.id not in ADMINS:
         await update.message.reply_text("🚫 Non sei autorizzato.")
         return
@@ -359,13 +548,14 @@ async def inizia_modifica_punteggio(update: Update, context: ContextTypes.DEFAUL
         return ConversationHandler.END
 
     keyboard = [
-    [InlineKeyboardButton(
-        text=f"{match} ({set1})",
-        callback_data=f"{match} {set1}"
-    )]
+        [InlineKeyboardButton(
+            text=f"{match} ({set1})",
+            callback_data=f"{match} {set1}"
+        )]
         for match, set1 in partite
     ]
-    await update.message.reply_text("📝 Seleziona la partita da modificare:", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("📝 Seleziona la partita da modificare:",
+                                    reply_markup=InlineKeyboardMarkup(keyboard))
     return SCELTA_PARTITA
 
 
@@ -433,7 +623,9 @@ async def aggiorna_punteggio(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         # 1. annulla effetti del vecchio punteggio
         for squadra, punteggio in zip((squadra1, squadra2), (vecchio1, vecchio2)):
-            cur.execute("UPDATE Squadre SET Partite_Giocate = Partite_Giocate - 1, Punti = Punti - ? WHERE Nome_Squadra = ?", (punteggio, squadra))
+            cur.execute(
+                "UPDATE Squadre SET Partite_Giocate = Partite_Giocate - 1, Punti = Punti - ? WHERE Nome_Squadra = ?",
+                (punteggio, squadra))
 
         # togli vittoria precedente
         if vecchio1 == 50:
@@ -443,7 +635,9 @@ async def aggiorna_punteggio(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         # 2. applica nuovo punteggio
         for squadra, punteggio in zip((squadra1, squadra2), (nuovo1, nuovo2)):
-            cur.execute("UPDATE Squadre SET Partite_Giocate = Partite_Giocate + 1, Punti = Punti + ? WHERE Nome_Squadra = ?", (punteggio, squadra))
+            cur.execute(
+                "UPDATE Squadre SET Partite_Giocate = Partite_Giocate + 1, Punti = Punti + ? WHERE Nome_Squadra = ?",
+                (punteggio, squadra))
 
         # aggiungi vittoria corretta
         if nuovo1 == 50:
@@ -452,15 +646,18 @@ async def aggiorna_punteggio(update: Update, context: ContextTypes.DEFAULT_TYPE)
             cur.execute("UPDATE Squadre SET Vittorie = Vittorie + 1 WHERE Nome_Squadra = ?", (squadra2,))
 
         # aggiorna la tabella Partite
-        cur.execute("UPDATE Partite SET Set_1 = ? WHERE Lista_Match = ?", (f"[{nuovo1},{squadra1} - {nuovo2},{squadra2}]", match))
+        cur.execute("UPDATE Partite SET Set_1 = ? WHERE Lista_Match = ?",
+                    (f"[{nuovo1},{squadra1} - {nuovo2},{squadra2}]", match))
         conn.commit()
 
     await update.message.reply_text("✅ Punteggio aggiornato con successo.")
     return ConversationHandler.END
 
+
 async def annulla(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Operazione annullata.")
     return ConversationHandler.END
+
 
 admin_modifica_punteggio = ConversationHandler(
     entry_points=[CommandHandler("modifica_punteggio", inizia_modifica_punteggio)],
@@ -471,8 +668,7 @@ admin_modifica_punteggio = ConversationHandler(
     fallbacks=[CommandHandler("annulla", annulla)],
 )
 
-
-#------------------------------------------
+# ------------------------------------------
 # confere azioni
 '''async def chiedi_conferma(update: Update, context: ContextTypes.DEFAULT_TYPE, funzione_target: str, messaggio: str):
     keyboard = InlineKeyboardMarkup([
@@ -498,4 +694,3 @@ async def gestisci_callback_conferma(update: Update, context: ContextTypes.DEFAU
 
     elif data == "annulla_azione":
         await query.edit_message_text("❌ Azione annullata.")'''
-

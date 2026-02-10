@@ -4,7 +4,7 @@ from telegram.ext.filters import MessageFilter
 from handlers.menu import *
 from states import *
 from utils.db import *
-from utils.globals import ADMINS, CAPI
+from utils.globals import ADMINS, CAPI, GESTIONE
 import utils.globals as globals
 import sqlite3
 from telegram import BotCommand, BotCommandScopeChat
@@ -20,7 +20,15 @@ async def set_comandi_utente(bot, user_id: int):
         BotCommand("cancella_squadra", "Cancella una squadra esistente"),
         BotCommand("cancella_utente", "Rimuove un utente dal sistema"),
         BotCommand("modifica_punteggio", "Modifica punteggio partita"),
+
+
+        BotCommand("pausa", "Mette in pausa la disponibilità per le partite"),
+        BotCommand("riprendi", "Riattiva la disponibilità per le partite"),
+        BotCommand("chiusura_evento", "Fine evento a tempo, lasciare finire le partite"),
+        BotCommand("fine_torneo", "Fine torneo, chiusura partite"),
         BotCommand("inizio", "inizia la registrazione giocatori"),
+        BotCommand('pulisci', 'Pulizia di tutte le entry di tutte le tabelle'),
+
     ]
 
     comandi_capo = [
@@ -32,8 +40,10 @@ async def set_comandi_utente(bot, user_id: int):
     '''comandi_gestione = [
         BotCommand("pausa", "Mette in pausa la disponibilità per le partite"),
         BotCommand("riprendi", "Riattiva la disponibilità per le partite"),
-        BotCommand("fine_evento", "Fine evento a tempo, lasciare finire le partite"),
+        BotCommand("chiusura_evento", "Fine evento a tempo, lasciare finire le partite"),
         BotCommand("fine_torneo", "Fine torneo, chiusura partite"),
+        BotCommand("inizio", "inizia la registrazione giocatori"),
+        BotCommand('pulisci', 'Pulizia di tutte le entry di tutte le tabelle'),
     ]'''
 
 
@@ -46,9 +56,9 @@ async def set_comandi_utente(bot, user_id: int):
     elif user_id in CAPI:
         await bot.set_my_commands(comandi_base + comandi_capo, scope=BotCommandScopeChat(user_id))
 
-    # Comandi per gestione tempi torneo
+    #Comandi per gestione tempi torneo
     #elif user_id in GESTIONE:
-        #await bot.set_my_commands(comandi_gestione, scope=BotCommandScopeChat(user_id))
+        #await bot.set_my_commands(comandi_base + comandi_capo + comandi_gestione, scope=BotCommandScopeChat(user_id))
 
     # Solo comandi base
     else:

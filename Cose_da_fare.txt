@@ -1,20 +1,37 @@
-chiede
 
 Cose da fare
 
-*cose non urgenti*
-
-18. registra_partita -> aggiungere possibilità di aggiungere punteggio anche se non sei di quella squadra
-
-*cose urgenti*
-
-
+fatto -- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
+fatto -- sistemare il matchmaking con il controllo dello stesso girone
+fatto -- assegnazione campi ai gironi
+fatto -- convertire la foto di ritorno della classifica aggiungendo i gironi
+sistemato info.partite in corso
 
 
-problemi usciti al test
+-- sistemare comandi per il giorno giusto
 
 
 
+da controllare -- partite legate ai campi
+da controllare -- sistemare le risposte nelle info adattandole al torneo nuovo
+
+lista comandi per il grande giorno:
+-- /pulisci              pulisce tutte le tabelle e resetta il bot
+-- /inizio               accende il bot a tutte le persone non admin
+-- /chiusura_evento      termina la possibilità di dare disponibilità e lascia finire le partite
+-- /fine_torneo          termina il torneo a gironi e estrae i quarti di finali
+
+
+extra:
+/pausa     mette in pausa il tonero
+/riprendi  riprende dopo la pausa
+
+
+
+
+
+per aprire db mida:  sqlite_web .\Torneo_Molkky.db
+per aprire db des:  sqlite_web ./Torneo_Molkky.db
 
 
 
@@ -28,16 +45,7 @@ problemi usciti al test
 
 
 
-Cose fatte
-1. start funziona
-2. registrazione funziona
-3.comandi admin funzionano
-4. menu a posto
 
-6. info funziona
-6a. info -> classifica funziona
-7. generazione lista match (ogni volta che si aggiunge una squadra)
-8. operations
-9. creare funzione per resettare utente, cancella utente e id dalla tabella e lo toglie dalla squadra_tabella_giocatori
 
-Ultima cosa fatta:
+
+

@@ -59,9 +59,15 @@ async def mostra_menu_principale(update: Update, context: ContextTypes.DEFAULT_T
 
 # raccoglitore foto funziona
 
-FOTO_DIR = "C:\\Users\\giorg\\PycharmProjects\\Torneo_Bot\\Foto\\foto emiliana"
+# --- GESTIONE PERCORSI DINAMICI ---
+# Calcola la cartella principale del progetto
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Percorso universale (funziona su Mac e Windows)
+FOTO_DIR = os.path.join(BASE_DIR, "Foto", "foto emiliana")
 os.makedirs(FOTO_DIR, exist_ok=True)
 
+# --- RACCOGLITORE FOTO ---
 async def ricevi_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print('menu -> ricevi_foto')
     user = update.effective_user
@@ -71,6 +77,7 @@ async def ricevi_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f") # arriva ai microsecondi
     filename = f"{user.id}_{timestamp}.jpg" # nomina ogni foto diversa in base all'orario
 
+    # Usiamo os.path.join per unire cartella e nome file in modo sicuro
     path = os.path.join(FOTO_DIR, filename)
     await file.download_to_drive(path)
 

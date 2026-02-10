@@ -2,8 +2,7 @@
 import sqlite3
 import re
 import time
-
-
+from itertools import combinations, permutations
 
 DB_PATH = "Torneo_Molkky.db"
 
@@ -150,28 +149,55 @@ def aggiungi_squadra(nome: str):
         cur.execute("INSERT INTO Squadre (Nome_Squadra,Partite_Giocate, Vittorie, Punti, Status) VALUES (?, ?, ?, ?, ?)", (nome, 0, 0, 0, "indisponibile"))
         print(f"[INFO] Squadra {nome} aggiunta.")
 
-        # Recupera le altre squadre già presenti
-        cur.execute("SELECT Nome_Squadra FROM Squadre WHERE Nome_Squadra != ?", (nome,))
-        altre_squadre = [row[0] for row in cur.fetchall()]
 
-        # Crea i match (una sola riga per coppia ordinata)
-        for altra in altre_squadre:
-            squadre = sorted([nome, altra])  # normalizza ordine
-            match = f"{squadre[0]}-{squadre[1]}"
-
-            # Inserisci il match solo se non esiste già
-            cur.execute("SELECT 1 FROM Partite WHERE Lista_Match = ?", (match,))
-            if not cur.fetchone():
-                cur.execute(
-                    "INSERT INTO Partite (Lista_Match, Status_Partita) VALUES (?, ?)",
-                    (match, "non giocata")
-                )
-                print(f"[INFO] Match {match} creato.")
 
         conn.commit()
 
     return True
 
+
+
+
+
+
+
+
+
+def genera_tutti_i_match():
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+
+        # 1. Recupera tutti i gironi unici presenti nel DB
+        cur.execute("SELECT DISTINCT Girone FROM Squadre")
+        gironi = [row[0] for row in cur.fetchall()]
+
+        for girone in gironi:
+            # 2. Per ogni girone, prendi tutte le squadre
+            cur.execute("SELECT Nome_Squadra FROM Squadre WHERE Girone = ?", (girone,))
+            squadre = [row[0] for row in cur.fetchall()]
+
+            # 3. Genera tutte le combinazioni possibili di coppie (Round Robin)
+            # combinations('ABCD', 2) --> AB, AC, AD, BC, BD, CD
+            #match_girone = list(combinations(squadre, 2))
+            match_girone = list(permutations(squadre, 2))
+
+            print(f"[INFO] Generazione di {len(match_girone)} match per il Girone {girone}...")
+
+            for s1, s2 in match_girone:
+                # Normalizziamo il nome per sicurezza (es. "Squadra A-Squadra B")
+                # Se vuoi mantenere un ordine fisso alfabetico:
+                #coppia = sorted([s1, s2])
+                coppia = [s1, s2]
+                label_match = f"{coppia[0]}-{coppia[1]}"
+
+                # 4. Inserimento con "IGNORE" o check (per non duplicare se rilanci la funzione)
+                cur.execute("""
+                    INSERT OR IGNORE INTO Partite (Lista_Match, Status_Partita) 
+                    VALUES (?, ?)
+                """, (label_match, "non giocata"))
+
+        conn.commit()
+        print("[SUCCESS] Calendario generato correttamente.")
 
 def cancella_squadra_completa(nome_squadra: str):
     print(f"db -> cancella_squadra_completa (Nome squadra: {nome_squadra})")
@@ -341,7 +367,7 @@ def libera_campo(match):
 
 def registra_punteggio_partita(squadra1: str, squadra2: str, punti1: int, punti2: int):
     print('db -> registra_punteggio_partita')
-    match = "-".join(sorted([squadra1, squadra2]))  # normalizza nome match
+    match = "-".join([squadra1, squadra2])  # normalizza nome match
     set1 = f"[{punti1},{squadra1} - {punti2},{squadra2}]"
 
     #aggiornamento tabella Partite
@@ -361,7 +387,7 @@ def registra_punteggio_partita(squadra1: str, squadra2: str, punti1: int, punti2
         #qui recuperare durata e fare sottrazzione e segnare
         cur.execute("SELECT Durata FROM Partite WHERE Lista_Match = ?", (match,))
         row = cur.fetchone()
-
+        print()
         inizio = float(row[0])
         fine = float(time.time())
         durata_sec = fine - inizio
