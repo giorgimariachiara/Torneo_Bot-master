@@ -184,7 +184,7 @@ async def inserisci_punteggio_squadra2(update: Update, context: ContextTypes.DEF
                             (match_ritorno, match_attuale))
                 conn.commit()
 
-            msg_ritorno = f"🔄 **RITORNO IMMEDIATO!**\n\nContinuate sul campo attuale.\n⚔️ `{squadra2}` (Casa) VS. `{squadra1}` (Trasferta)"
+            msg_ritorno = f"🔄 **RITORNO IMMEDIATO!**\n\nInserici il punteggio del secondo set cliccando ^📝 Registra punteggio$.\n⚔️ `{squadra2}` (Casa) VS. `{squadra1}` (Trasferta)"
             for uid in utenti_coinvolti:
                 await context.bot.send_message(uid, msg_ritorno, parse_mode="Markdown")
 

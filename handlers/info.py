@@ -95,8 +95,8 @@ async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "1. Quando ti senti pronto, clicca su *🎖 Voglio giocare* per partecipare\n"
         "2. Il bot forma le partite e assegna gli avversari 👥\n"
         "3. Le partite sono a *2 set*: affronterai solo squadre del tuo *girone*\n"
-        "4. A fine set inserisci il punteggio tramite *📝 Registra punteggio* "
-        "(basta che lo faccia uno dei due giocatori) e la partita viene registrata\n\n"
+        "4. Alla fine dei set inserisci il punteggio tramite *📝 Registra punteggio* "
+        "(basta che lo faccia uno dei quattro giocatori) e la partita viene registrata\n\n"
         "🏆 *Classifica:*\n"
         "Ogni vittoria ti avvicina al podio!\n"
         "Al termine dei gironi, le migliori squadre di ogni girone passeranno ai *quarti di finale*\n\n"
@@ -306,7 +306,7 @@ def genera_classifica_gironi_con_pillow(
     blocks = []
     for g in sorted(gironi.keys()):
         blocks.append(("title", (f"Girone {g}",)))
-        blocks.append(("header", ("Squadra", "V/PG", "Punti")))
+        blocks.append(("header", ("Squadra", "V/SG", "Punti")))
         dati = gironi[g]
         for i, (nome, giocate, vinte, punti) in enumerate(dati, start=1):
             evid = (nome == squadra_utente)
