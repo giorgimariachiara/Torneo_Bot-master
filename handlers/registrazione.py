@@ -22,12 +22,12 @@ async def set_comandi_utente(bot, user_id: int):
         BotCommand("modifica_punteggio", "Modifica punteggio partita"),
 
 
-        BotCommand("pausa", "Mette in pausa la disponibilità per le partite"),
-        BotCommand("riprendi", "Riattiva la disponibilità per le partite"),
-        BotCommand("chiusura_evento", "Fine evento a tempo, lasciare finire le partite"),
-        BotCommand("fine_torneo", "Fine torneo, chiusura partite"),
-        BotCommand("inizio", "inizia la registrazione giocatori"),
-        BotCommand('pulisci', 'Pulizia di tutte le entry di tutte le tabelle'),
+        #BotCommand("pausa", "Mette in pausa la disponibilità per le partite"),
+        #BotCommand("riprendi", "Riattiva la disponibilità per le partite"),
+        #BotCommand("chiusura_evento", "Fine evento a tempo, lasciare finire le partite"),
+        #BotCommand("fine_torneo", "Fine torneo, chiusura partite"),
+        #BotCommand("inizio", "inizia la registrazione giocatori"),
+        #BotCommand('pulisci', 'Pulizia di tutte le entry di tutte le tabelle'),
 
     ]
 

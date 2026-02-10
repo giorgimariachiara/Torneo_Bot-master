@@ -1,9 +1,9 @@
 
 Cose da fare
 
--- invece di ritorno immediato, indica che bisogna registrare il punteggio della seconda partita
--- cambiare diciture partite con set sg-pg
-
+fatto -- invece di ritorno immediato, indica che bisogna registrare il punteggio della seconda partita
+fatto -- cambiare diciture partite con set sg-pg e partite max 10
+fatto -- sistemare comandi per il giorno giusto
 fatto -- spostare la creazione delle partite dopo la crazione dei gironi, adesso le partite vengono create dopo la registrazione di ogni squadra
 fatto -- sistemare il matchmaking con il controllo dello stesso girone
 fatto -- assegnazione campi ai gironi
@@ -11,15 +11,14 @@ fatto -- convertire la foto di ritorno della classifica aggiungendo i gironi
 sistemato info.partite in corso
 
 
--- sistemare comandi per il giorno giusto
-
-
 
 da controllare -- partite legate ai campi
-da controllare -- sistemare le risposte nelle info adattandole al torneo nuovo
+
 
 lista comandi per il grande giorno:
 -- /pulisci              pulisce tutte le tabelle e resetta il bot
+-- /aggiungi_squadra     aggiungi le squadre una alla volta
+-- scrivi solo           fine
 -- /inizio               accende il bot a tutte le persone non admin
 -- /chiusura_evento      termina la possibilità di dare disponibilità e lascia finire le partite
 -- /fine_torneo          termina il torneo a gironi e estrae i quarti di finali

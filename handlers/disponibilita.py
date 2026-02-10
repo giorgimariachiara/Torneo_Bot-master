@@ -4,7 +4,7 @@ from states import *
 from operations.operations import *
 
 #numero di partite massime per squadra
-max_partite = 7
+max_partite = 10
 
 async def gestione_disponibilita(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("menu -> gestione_disponibilita")
@@ -37,7 +37,7 @@ async def gestione_disponibilita(update: Update, context: ContextTypes.DEFAULT_T
                 # Se la squadra ha raggiunto il limite di max_partite, non può più segnarsi come disponibile
                 if partite_giocate >= max_partite:
                     await update.message.reply_text(
-                        "⛔ La tua squadra ha già giocato 7 partite. Non puoi più renderti disponibile.")
+                        "⛔ La tua squadra ha già giocato tutte le partite. Non puoi più renderti disponibile.")
                     return MENU
 
 

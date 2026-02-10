@@ -101,8 +101,8 @@ async def invia_regolamento(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Ogni vittoria ti avvicina al podio!\n"
         "Al termine dei gironi, le migliori squadre di ogni girone passeranno ai *quarti di finale*\n\n"
         "📌 *Note:*\n"
-        "- Ogni set viene conteggiato come una partita, ma i due set vengono disputati di seguito\n"
-        "- Si lascerà il tempo per concludere tutte le partite già iniziate\n"
+        "- I due set della partita vengono disputati di seguito\n"
+        "- Si lascerà il tempo per concludere tutte le partite\n"
         "- In caso di parità vittorie, si contano i *punti totali* fatti\n\n"
         "Buon divertimento e che vinca la squadra più agguerrita! 🔥",
         parse_mode="Markdown"
@@ -416,10 +416,10 @@ async def invia_spiegazione_bot(update: Update, context: ContextTypes.DEFAULT_TY
         "Guarda la classifica aggiornata in tempo reale con le vittorie e i punti delle squadre\n\n"
         "📸 *Foto*\n"
         "Carica una tua foto per rendere il torneo ancora più divertente!\nNon ti preoccupare, poi le condividiamo.\n\n"
-        "🍔 *Info extra*\n"
+        "ℹ️ *Info extra*\n"
         "Troverai anche il regolamento del torneo  e tante altre informazioni utili\n\n"
         "Fai festa e offri una birra 🍻 a chi vuoi!\n\n"
-        "Bot sviluppato da Luca Midali e Giorgio Cortinovis per L'Emiliana Mölkky, con il supporto di Despina",
+        "Bot sviluppato da Luca Midali e Giorgio Cortinovis per L'Emiliana Mölkky, con il supporto di Despina Sindilieva",
         parse_mode="Markdown"
     )
     await mostra_menu_principale(update, context)
